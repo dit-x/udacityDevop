@@ -36,9 +36,9 @@ jobs:
           name: Install AWS CLI
           command: |
               apt update \ 
-              && apt-get install -yy less \
               && apt install curl \
               && apt install unzip \
+              && apt install -yy less \
               && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
               && unzip awscliv2.zip \
               && ls -lh \
