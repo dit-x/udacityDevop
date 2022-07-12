@@ -23,6 +23,34 @@ jobs:
             --template-file infrastructure-temp.yml \
             --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
             --region us-east-1
+          
+  configure_infrastructure: 
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          # You can get this ID in the section where you registered the SSH Key
+          fingerprints: ["e7:3d:8e:67:76:8c:5a:7d:e8:a8:f5:49:df:fc:f1:3c"] 
+      - run:
+          name: Get EC2 IP
+          command: |
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=Testing" \
+              --output text >> inventory.txt
+      - run:
+          name: check file
+          command: |
+            cat inventory.txt
+      - run:
+          name: Install Ansible
+          command: |
+            pip install ansible
+      - run:
+          name: Run Playbook and Configure server
+          command: |
+            ansible-playbook main-remote.yml -i inventory.txt
 
 
 ############################
