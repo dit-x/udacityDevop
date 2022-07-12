@@ -42,6 +42,7 @@ jobs:
               && unzip awscliv2.zip \
               && ls -lh \
               && ./aws/install  \
+              && ls aws  \
               && aws iam list-users
       - run:
           name: Get EC2 IP
