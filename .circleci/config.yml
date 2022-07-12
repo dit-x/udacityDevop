@@ -33,6 +33,15 @@ jobs:
           # You can get this ID in the section where you registered the SSH Key
           fingerprints: ["e7:3d:8e:67:76:8c:5a:7d:e8:a8:f5:49:df:fc:f1:3c"] 
       - run:
+          name: Install AWS CLI
+          command: |
+              apk update \
+              && apk --no-cache add curl \
+              && apk --no-cache add unzip \
+              && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+              && unzip awscliv2.zip \
+              && ./aws/install   
+      - run:
           name: Get EC2 IP
           command: |
             aws ec2 describe-instances \
@@ -59,5 +68,7 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - create_infrastructure
+      # - create_infrastructure
       - configure_infrastructure
+          # requires:
+          #   - create_infrastructure
