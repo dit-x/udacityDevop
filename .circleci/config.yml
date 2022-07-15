@@ -6,23 +6,29 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      workflowID:
-        type: string    
+      workflow_id:
+        type: string   
+      when:
+        type: string   
+        default: on_fail 
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            aws s3 rm s3://dit-udapeople-<< parameters.workflowID >> --recursive
-            aws s3 rb s3://dit-udapeople-<< parameters.workflowID >> --force
-            aws cloudformation delete-stack --stack-name dit-udapeople-frontend-<< parameters.workflowID >>
-            aws cloudformation delete-stack --stack-name dit-udapeople-backend-<< parameters.workflowID >>
+            aws s3 rm s3://dit-udapeople-<< parameters.workflow_id >> --recursive
+            aws s3 rb s3://dit-udapeople-<< parameters.workflow_id >> --force
+            aws cloudformation delete-stack --stack-name dit-udapeople-frontend-<< parameters.workflow_id >>
+            aws cloudformation delete-stack --stack-name dit-udapeople-backend-<< parameters.workflow_id >>
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      workflowID:
-        type: string       
+      workflow_id:
+        type: string   
+      when:
+        type: string   
+        default: on_fail     
     steps:
       - run:
           name: Revert migrations
@@ -129,10 +135,6 @@ jobs:
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
-    filers:
-      branches: 
-        only:
-          - main
     steps:
       - checkout
       - run:
@@ -169,7 +171,6 @@ jobs:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail
 
   configure-infrastructure:
     docker:
@@ -177,7 +178,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: [${SSH_FINGERPRINT}]
+          fingerprints: ['e7:3d:8e:67:76:8c:5a:7d:e8:a8:f5:49:df:fc:f1:3c']
       - attach_workspace:
           at: ~/
       - run:
@@ -191,7 +192,6 @@ jobs:
             ansible-playbook -i ./.circleci/ansible/inventory.txt ./.circleci/ansible/configure-server.yml
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail      
 
   run-migrations:
     docker:
@@ -218,7 +218,6 @@ jobs:
             fi
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail    
 
   deploy-frontend:
     docker:
@@ -243,7 +242,6 @@ jobs:
             aws s3 cp ./frontend/dist "s3://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail     
                     
   deploy-backend:
     docker:
@@ -251,7 +249,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-        fingerprints: [${SSH_FINGERPRINT}]
+          fingerprints: ['e7:3d:8e:67:76:8c:5a:7d:e8:a8:f5:49:df:fc:f1:3c']
       - attach_workspace:
           at: ~/
       - run:
@@ -270,7 +268,6 @@ jobs:
             ansible-playbook -i ./.circleci/ansible/inventory.txt ./.circleci/ansible/deploy-backend.yml 
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail
 
   smoke-test:
     docker:
@@ -311,10 +308,8 @@ jobs:
 
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}  
-          when: on_fail
       # Here's where you will add some code to rollback on failure  
 
   cloudfront-update:
@@ -336,16 +331,15 @@ jobs:
               --template-file ./.circleci/files/cloudfront.yml \
               --tags project=dit-udapeople \
               --stack-name "dit-udapeople-cloudfront-production" \
-              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}  
-          when: on_fail
       # Here's where you will add some code to rollback on failure  
 
-cleanup:
+  cleanup:
     docker:
       - image: amazon/aws-cli
     steps:
