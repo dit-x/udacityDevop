@@ -129,10 +129,10 @@ jobs:
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
-    
-    branches: 
-      only:
-        - main
+    filers:
+      branches: 
+        only:
+          - main
     steps:
       - checkout
       - run:
@@ -216,7 +216,7 @@ jobs:
               curl https://kvdb.io/${KVDB_BUCKET}/DB_MIGRATION_STATUS -d '0'
               exit 1
             fi
-     - destroy-environment:
+      - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail    
 
