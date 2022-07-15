@@ -9,8 +9,8 @@ commands:
       - run:
           name: install AWS cli on node
           command: |
-            apt-get update
-            apt-get install -y unzip
+            sudo apt-get update
+            sudo apt-get install -y unzip
             sudo mkdir -p /tmp/awscli
             cd /tmp/awscli
             sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
