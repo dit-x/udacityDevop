@@ -1,5 +1,7 @@
 version: 2.1
 
+# project_tag: DiT-UdaPeople
+
 commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -67,58 +69,86 @@ jobs:
 
   test-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Testing frontend
+          command: |
+            cd frontend
+            npm install
+            npm run test
                 
   test-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Testing backend
+          command: |
+            cd backend
+            npm install
+            npm run test
             
   scan-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Scan frontend dependencies
+          command: |
+            cd frontend
+            npm install
+            npm audit --audit-level=critical || true
 
   scan-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Testing backend
+          command: |
+            cd backend
+            npm install
+            npm audit --audit-level=critical || true
 
   deploy-infrastructure:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli
+    
+    branches: 
+      only:
+        - main
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your back-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
+              --tags project=DiT-UdaPeople \
+              --stack-name "DiT-UdaPeople-BE-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
               exit 1
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your front-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
+              # --tags project=DiT-UdaPeople \
+              # --stack-name "DiT-UdaPeople-FE-${CIRCLE_WORKFLOW_ID:0:7}" \
+              # --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
               exit 1
       - run:
           name: Add back-end ip to ansible inventory
@@ -129,15 +159,19 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
 
   configure-infrastructure:
     docker:
-      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - checkout
+      add_ssh_keys:
+        fingerprints: ["e7:3d:8e:67:76:8c:5a:7d:e8:a8:f5:49:df:fc:f1:3c"]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
@@ -148,13 +182,15 @@ jobs:
           command: |
             # Your code here
             exit 1
-      # Here's where you will add some code to rollback on failure      
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail      
 
   run-migrations:
     docker:
-      # Docker image here that supports NodeJS
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Run migrations
           command: |
@@ -165,13 +201,15 @@ jobs:
           command: |
             # Your code here
             exit 1
-     # Here's where you will add some code to rollback on failure      
+     - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail    
 
   deploy-frontend:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Install dependencies
           command: |
@@ -186,15 +224,19 @@ jobs:
           name: Deploy frontend objects
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure      
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail     
                     
   deploy-backend:
     docker:
-      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - checkout
+     add_ssh_keys:
+        fingerprints: ["e7:3d:8e:67:76:8c:5a:7d:e8:a8:f5:49:df:fc:f1:3c"]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
@@ -203,7 +245,9 @@ jobs:
           name: Deploy backend
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure  
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
 
   smoke-test:
     docker:
