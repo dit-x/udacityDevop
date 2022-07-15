@@ -3,6 +3,20 @@ version: 2.1
 # project_tag: dit-udapeople
 
 commands:
+  install_aws:
+    description: Install AWS CLI 
+    steps:
+      - run:
+        name: install AWS cli on node
+        command: |
+          apt-get update
+          apt-get install -y unzip
+          mkdir -p /tmp/awscli
+          cd /tmp/awscli
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -120,6 +134,7 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - install_aws
       - restore_cache:
           keys: [frontend-build]
       - run:
@@ -181,8 +196,8 @@ jobs:
             ls 
             pwd
             curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP  -d "${BACKEND_IP}" 
-            echo ${BACKEND_IP} >> inventory.txt
-            cat inventory.txt
+            echo ${BACKEND_IP} >> ./.circleci/ansible/inventory.txt
+            cat ./.circleci/ansible/inventory.txt
 
       - persist_to_workspace:
           root: ~/
@@ -204,10 +219,12 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible
+            pip install awscli
       - run:
           name: Configure server
           command: |
-            cat inventory.txt
+            ls
+            pwd
             ansible-playbook -i ./.circleci/ansible/inventory.txt ./.circleci/ansible/configure-server.yml
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -217,6 +234,7 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - install_aws
       - run:
           name: Run migrations
           command: |
