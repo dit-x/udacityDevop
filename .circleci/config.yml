@@ -177,7 +177,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["${SSH_FINGERPRINT}"]
+          fingerprints: [${SSH_FINGERPRINT}]
       - attach_workspace:
           at: ~/
       - run:
@@ -251,7 +251,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-        fingerprints: ["${SSH_FINGERPRINT}"]
+        fingerprints: [${SSH_FINGERPRINT}]
       - attach_workspace:
           at: ~/
       - run:
