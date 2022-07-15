@@ -30,9 +30,10 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name dit-udapeople-frontend-<< parameters.workflow_id >>
-            aws cloudformation delete-stack --stack-name dit-udapeople-backend-<< parameters.workflow_id >>
+            aws cloudformation delete-stack --stack-name dit-udapeople-BE-<< parameters.workflow_id >>
+            aws cloudformation delete-stack --stack-name dit-udapeople-FE-<< parameters.workflow_id >>
             
+            echo "Waiting for stacks to be deleted..."
             bucketstatus=$(aws s3api head-bucket --bucket dit-udapeople-<< parameters.workflow_id >> 2>&1)
             if echo "${bucketstatus}" | grep 'Not Found';
             then
@@ -134,7 +135,6 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - install_aws
       - restore_cache:
           keys: [frontend-build]
       - run:
