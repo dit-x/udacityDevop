@@ -250,7 +250,7 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
-     add_ssh_keys:
+      - add_ssh_keys:
         fingerprints: ["${SSH_FINGERPRINT}"]
       - attach_workspace:
           at: ~/
