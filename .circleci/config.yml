@@ -167,7 +167,7 @@ jobs:
               --filters "Name=tag:project,Values=dit-udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text)
             echo "${BACKEND_IP}"
-            curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP  -d ${BACKEND_IP} 
+            curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP  -s ${BACKEND_IP} 
             echo ${BACKEND_IP} >> ./.circleci/ansible/inventory.txt
             cat ./.circleci/ansible/inventory.txt
 
@@ -216,10 +216,10 @@ jobs:
             if grep "has been executed successfully" ./backend/migrations_log.txt;
             then
               echo "Database migration has been executed successfully"
-              curl https://kvdb.io/${KVDB_BUCKET}/DB_MIGRATION_STATUS -d '1'
+              curl https://kvdb.io/${KVDB_BUCKET}/DB_MIGRATION_STATUS -s '1'
             else
               echo "Database migration has failed, verify DB setup!"
-              curl https://kvdb.io/${KVDB_BUCKET}/DB_MIGRATION_STATUS -d '0'
+              curl https://kvdb.io/${KVDB_BUCKET}/DB_MIGRATION_STATUS -s '0'
               exit 1
             fi
       - destroy-environment:
