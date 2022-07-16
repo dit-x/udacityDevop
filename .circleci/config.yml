@@ -192,7 +192,6 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text)
-            echo "${BACKEND_IP}"
             ls 
             pwd
             curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP  -d "${BACKEND_IP}" 
