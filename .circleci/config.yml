@@ -241,6 +241,7 @@ jobs:
             ls
             pwd
             sudo npm install typescript -g
+            npm run build
             npm run migrations > migrations_log.txt
             cat ./migrations_log.txt
       - run:
