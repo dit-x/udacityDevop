@@ -1,14 +1,14 @@
 ---
 - name: Copy compiled files
   unarchive:
-    src: /home/ubuntu/udacityDevop/backend.tar.gz
-    dest: /home/ubuntu/
+    src: /root/project/backend.tar.gz
+    dest: /home/
 
 - name: Build backend
   ignore_errors: yes
   shell: |
-    tar -xvf documents.tar
-    cd /home/ubuntu/backend
+    tar -xvf backend.tar.gz
+    cd /home/backend
     npm i
     npm run build
 - name: Stop and delete already running server
@@ -19,6 +19,6 @@
 - name: Start server
   become: true
   shell: |
-    cd /home/ubuntu/backend
+    cd /home/backend
     pm2 start npm --name backend -- start
     pm2 ls
