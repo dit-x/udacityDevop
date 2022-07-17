@@ -246,7 +246,7 @@ jobs:
       - run:
           name: Send migration results to kvDB
           command: |
-            if grep "has been executed successfully" ./backend/migrations_log.txt;
+            if grep "has been executed successfully" migrations_log.txt;
             then
               echo "Database migration has been executed successfully"
               curl https://kvdb.io/${KVDB_BUCKET}/DB_MIGRATION_STATUS -d '1'
