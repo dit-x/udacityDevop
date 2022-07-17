@@ -9,13 +9,13 @@ commands:
       - run:
           name: install AWS cli on node
           command: |
-            sudo apt-get update
-            sudo apt-get install -y unzip
-            sudo mkdir -p /tmp/awscli
+            apt-get update
+            apt-get install -y unzip
+            mkdir -p /tmp/awscli
             cd /tmp/awscli
-            sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            sudo unzip awscliv2.zip
-            sudo ./aws/install
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install
 
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -230,7 +230,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
+      - image: node:14
     steps:
       - checkout
       - install_aws
