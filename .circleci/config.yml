@@ -282,8 +282,8 @@ jobs:
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            cd project/frontend/
             ls
+            cd ./frontend/
             npm i
             npm run build
       - run:
