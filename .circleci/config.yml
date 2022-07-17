@@ -275,10 +275,14 @@ jobs:
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
+            cd .frontend
+            ls
+            npm i
+            npm run build
       - run:
           name: Deploy frontend objects
           command: |
-            aws s3 cp ./frontend/dist "s3://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+            aws s3 cp ./dist "s3://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
                     
@@ -337,7 +341,7 @@ jobs:
           name: Frontend smoke test.
           command: |
             URL="http://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/index.html"
-            if curl -s ${URL}| grep "Moved";
+            if curl -s ${URL}| grep  -q "Welcome";
             then
               echo "Frontend smoke test passed"
             else
