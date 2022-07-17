@@ -247,6 +247,7 @@ jobs:
           name: Send migration results to kvDB
           command: |
             sleep 5
+            cd ./backend
             pwd
             ls
             if grep "has been executed successfully" migrations_log.txt;
