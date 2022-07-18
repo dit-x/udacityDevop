@@ -312,6 +312,7 @@ jobs:
           name: Deploy backend
           command: |
             pwd
+            ls
             tar czf backend.tar.gz backend/
             export ANSIBLE_HOST_KEY_CHECKING=false
             ansible-playbook -i ./.circleci/ansible/inventory.txt ./.circleci/ansible/deploy-backend.yml 
@@ -337,21 +338,26 @@ jobs:
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            curl -s "${API_URL}/api/status" -v
-      - run:
-          name: Backend smoke test.
-          command: |
-            echo "${API_URL}"
-            curl -s "${API_URL}/api/status" -v
+            
       - run:
           name: Frontend smoke test.
           command: |
-            URL="http://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/index.html"
+            URL="https://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3.amazonaws.com/index.html"
             if curl -s ${URL}| grep  -q "Welcome";
             then
               echo "Frontend smoke test passed"
             else
               echo "Frontend smoke test failed"
+            fi
+      - run:
+          name: Backend smoke test.
+          command: |
+            echo "${API_URL}"
+            if curl -s ${API_URL}/api/status | grep  -q "ok";
+            then
+              echo "Backend smoke test passed"
+            else
+              echo "Backend smoke test failed"
             fi
 
       - destroy-environment:
