@@ -338,6 +338,7 @@ jobs:
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
+            curl -s ${API_URL}/api/status -v
             
       - run:
           name: Frontend smoke test.
