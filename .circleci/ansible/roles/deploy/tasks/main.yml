@@ -24,8 +24,8 @@
   shell: |
     ls
     cd /home/ubuntu/backend
-    npm i
-    npm run build
+    sudo npm i
+    sudo npm run build
 - name: Stop and delete already running server
   ignore_errors: yes
   shell: |
