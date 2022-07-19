@@ -18,9 +18,6 @@
     global: yes
     production: yes
     state: present
-
-- debug:
-    msg: "{{ ansible_env }}"
     
 - name: Build backend
   ignore_errors: yes
