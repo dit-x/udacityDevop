@@ -280,7 +280,8 @@ jobs:
           command: |
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            echo "${API_URL}" >> frontend/.env
+            cat frontend/.env
             ls
             cd ./frontend/
             npm i
@@ -407,12 +408,15 @@ jobs:
             export STACKS=($(aws cloudformation list-stacks \
                 --query "StackSummaries[*].StackName" \
                 --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
-            echo Stack names: "${STACKS[@]}"
-            export OldWorkflowID=$(curl --insecure https://kvdb.io/${KVDB_BUCKET}/WORK_ID)
+            export OldWorkflowID=$(aws cloudformation \
+                  list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                  --no-paginate --output text)
+            
             echo Old Workflow ID: $OldWorkflowID 
+            echo Stack names: "${STACKS[@]}"
+
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              echo "${OldWorkflowID}"
               aws s3 rm "s3://dit-udapeople-${OldWorkflowID}" --recursive
               aws cloudformation delete-stack --stack-name "dit-udapeople-BE-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "dit-udapeople-FE-${OldWorkflowID}"
