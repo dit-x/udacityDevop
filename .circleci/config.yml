@@ -354,6 +354,7 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
+            sleep 10
             echo "${API_URL}"
             if curl -s ${API_URL}/api/status | grep  -q "ok";
             then
@@ -414,9 +415,9 @@ jobs:
           command: |
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              aws s3 rm "s3://dit-udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "dit-udapeople-BE-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "dit-udapeople-FE-${OldWorkflowID}"
             fi
             
 
