@@ -29,6 +29,7 @@
 - name: Stop and delete already running server
   ignore_errors: yes
   shell: |
+    cd /home/ubuntu/backend
     pm2 stop backend
     pm2 delete backend
 - name: Start server
