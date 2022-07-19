@@ -193,6 +193,7 @@ jobs:
             ls 
             pwd
             curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP  -d "${BACKEND_IP}" 
+            curl https://kvdb.io/${KVDB_BUCKET}/WORK_ID  -d "${CIRCLE_WORKFLOW_ID:0:7}" 
             echo ${BACKEND_IP} >> ./.circleci/ansible/inventory.txt
             cat ./.circleci/ansible/inventory.txt
 
@@ -279,7 +280,8 @@ jobs:
           command: |
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            echo "${API_URL}" >> frontend/.env
+            cat frontend/.env
             ls
             cd ./frontend/
             npm i
@@ -353,6 +355,7 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
+            sleep 10
             echo "${API_URL}"
             if curl -s ${API_URL}/api/status | grep  -q "ok";
             then
@@ -400,25 +403,23 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Get old stack workflow id
-          command: |
-            OLD_WORKFLOW_ID=$(aws cloudformation list-exports \
-              --query "Exports[?Name==\`WorkflowID\`].Value" \
-              --no-paginate --output text)
-            echo "$OLD_WORKFLOW_ID"
-            export OldWorkflowID="$OLD_WORKFLOW_ID"
-            export STACKS=${CIRCLE_WORKFLOW_ID:0:7}
-            echo "${OldWorkflowID}"
-      - run:
           name: Remove old stacks and files
           command: |
-            if [[ "${STACKS}" != "${OldWorkflowID}" ]]
+            export STACKS=($(aws cloudformation list-stacks \
+                --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            export OldWorkflowID=$(aws cloudformation \
+                  list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                  --no-paginate --output text)
+            
+            echo Old Workflow ID: $OldWorkflowID 
+            echo Stack names: "${STACKS[@]}"
+
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              aws cloudformation delete-stack --stack-name "dit-udapeople-frontend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "dit-udapeople-backend-${OldWorkflowID}"
               aws s3 rm "s3://dit-udapeople-${OldWorkflowID}" --recursive
-            else
-              echo "No old stacks to remove"
+              aws cloudformation delete-stack --stack-name "dit-udapeople-BE-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "dit-udapeople-FE-${OldWorkflowID}"
             fi
             
 

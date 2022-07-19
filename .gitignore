@@ -70,3 +70,5 @@ node_modules
 dist
 .DS_Store
 submit/
+./backend/package-lock.json
+./frontend/package-lock.json
