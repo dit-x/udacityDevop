@@ -39,6 +39,7 @@
     echo $TYPEORM_DATABASE
     WORK_ID=$(curl https://kvdb.io/${KVDB_BUCKET}/WORK_ID)
     curl https://kvdb.io/${KVDB_BUCKET}/DEPLOY_ID  -d "deplo ${WORK_ID}" 
+    curl https://kvdb.io/${KVDB_BUCKET}/DB_HOST  -d "${TYPEORM_HOST}" 
     pm2 start npm --name backend -- start
     pm2 ls
 
