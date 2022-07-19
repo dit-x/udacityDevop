@@ -193,6 +193,7 @@ jobs:
             ls 
             pwd
             curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP  -d "${BACKEND_IP}" 
+            curl https://kvdb.io/${KVDB_BUCKET}/WORK_ID  -d "${CIRCLE_WORKFLOW_ID:0:7}" 
             echo ${BACKEND_IP} >> ./.circleci/ansible/inventory.txt
             cat ./.circleci/ansible/inventory.txt
 
@@ -406,17 +407,15 @@ jobs:
               --query "Exports[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text)
             echo "$OLD_WORKFLOW_ID"
-            export OldWorkflowID="$OLD_WORKFLOW_ID"
             export STACKS=${CIRCLE_WORKFLOW_ID:0:7}
-            echo "${OldWorkflowID}"
       - run:
           name: Remove old stacks and files
           command: |
-            if [[ "${STACKS}" != "${OldWorkflowID}" ]]
+            if [[ "${STACKS}" != "${OLD_WORKFLOW_ID}" ]]
             then
-              aws cloudformation delete-stack --stack-name "dit-udapeople-frontend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "dit-udapeople-backend-${OldWorkflowID}"
-              aws s3 rm "s3://dit-udapeople-${OldWorkflowID}" --recursive
+              aws s3 rm "s3://dit-udapeople-${OLD_WORKFLOW_ID}" --recursive
+              aws cloudformation delete-stack --stack-name "dit-udapeople-FE-${OLD_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "dit-udapeople-BE-${OLD_WORKFLOW_ID}"
             else
               echo "No old stacks to remove"
             fi
