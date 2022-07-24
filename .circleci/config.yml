@@ -235,7 +235,7 @@ jobs:
             cd ./backend
             pwd
             sudo npm install
-            echo "$TYPEORM_HOST here"
+            echo "$TYPEORM_HOST here22"
             sudo npm run migrations > migrations_log.txt
             cat ./migrations_log.txt
             ls
