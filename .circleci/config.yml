@@ -315,7 +315,7 @@ jobs:
           name: Deploy backend
           command: |
             pwd
-            ls
+            ls backend
             tar czf backend.tar.gz backend/
             export ANSIBLE_HOST_KEY_CHECKING=false
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
