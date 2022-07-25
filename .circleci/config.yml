@@ -25,6 +25,10 @@ commands:
       when:
         type: string   
         default: on_fail 
+    - when:
+      condition:
+        and:
+          - equal: [master, << pipelin.git.branch >>]
     steps:
       - run:
           name: Destroy environments
