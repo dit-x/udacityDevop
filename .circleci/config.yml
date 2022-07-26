@@ -280,18 +280,17 @@ jobs:
       - checkout
       - install_aws
       - run:
-          name: Get backend url and Deploy frontend objects
+          name: Get backend url and Deploy frontend with backend API Url
           command: |
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}" >> frontend/.env
             cat frontend/.env
-      - run:
-          name: Rebuilding frontend with backend API Url
-          command: |
+
             cd ./frontend
             npm i
             npm run build
+            
       - run:
           name: Deploying frontend objects to S3
           command: |
