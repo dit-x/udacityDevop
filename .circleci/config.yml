@@ -365,11 +365,11 @@ jobs:
           command: |
             sleep 10
             echo "${API_URL}"
-            if curl -s ${API_URL}/api/status | grep  -q "ok";
+             if curl "${API_URL}/api/status" | grep "ok"
             then
-              echo "Backend smoke test passed"
+              return 0
             else
-              echo "Backend smoke test failed"
+              return 1
             fi
 
       - destroy-environment:
