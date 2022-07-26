@@ -25,23 +25,32 @@ commands:
       when:
         type: string   
         default: on_fail 
+    
     steps:
-      - run:
-          name: Destroy environments
-          when: on_fail
-          command: |
-            aws cloudformation delete-stack --stack-name dit-udapeople-BE-<< parameters.workflow_id >>
-            aws cloudformation delete-stack --stack-name dit-udapeople-FE-<< parameters.workflow_id >>
-            
-            echo "Waiting for stacks to be deleted..."
-            bucketstatus=$(aws s3api head-bucket --bucket dit-udapeople-<< parameters.workflow_id >> 2>&1)
-            if echo "${bucketstatus}" | grep 'Not Found';
-            then
-              echo "bucket doesn't exist";
-            else
-              aws s3 rm s3://dit-udapeople-<< parameters.workflow_id >> --recursive
-              aws s3 rb s3://dit-udapeople-<< parameters.workflow_id >> --force
-            fi
+
+
+      - when:
+          condition:
+            and:
+              - on_fail
+              - equal: [master, << pipeline.git.branch >>]
+          steps:
+            - run:
+                name: Destroy environments
+                when: on_fail
+                command: |
+                  aws cloudformation delete-stack --stack-name dit-udapeople-BE-<< parameters.workflow_id >>
+                  aws cloudformation delete-stack --stack-name dit-udapeople-FE-<< parameters.workflow_id >>
+                  
+                  echo "Waiting for stacks to be deleted..."
+                  bucketstatus=$(aws s3api head-bucket --bucket dit-udapeople-<< parameters.workflow_id >> 2>&1)
+                  if echo "${bucketstatus}" | grep 'Not Found';
+                  then
+                    echo "bucket doesn't exist";
+                  else
+                    aws s3 rm s3://dit-udapeople-<< parameters.workflow_id >> --recursive
+                    aws s3 rb s3://dit-udapeople-<< parameters.workflow_id >> --force
+                  fi
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
