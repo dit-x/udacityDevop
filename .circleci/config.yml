@@ -352,15 +352,12 @@ jobs:
               && pip3 install --upgrade pip \
               && pip install awscli
       - run:
-          name: Get backend url
+          name: Backend smoke test.
           command: |
             BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            
-      - run:
-          name: Backend smoke test.
-          command: |
+
             sleep 10
             echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
@@ -369,6 +366,7 @@ jobs:
             else
               return 1
             fi
+          
       - run:
           name: Frontend smoke test.
           command: |
