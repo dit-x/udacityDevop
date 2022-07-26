@@ -3,43 +3,25 @@
   unarchive:
     src: /root/project/backend.tar.gz
     dest: /home/ubuntu
-
-- name: "install dependencies."
-  become: true
-  apt:
-    name: ["nodejs", "npm"]
-    state: latest
-    update_cache: yes
-
-- name: "install pm2"
-  become: true
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
     
-- name: Build backend
-  ignore_errors: yes
-  shell: |
-    ls
-    cd /home/ubuntu/backend
-    sudo npm i
-    sudo npm run build
-- name: Stop and delete already running server
-  ignore_errors: yes
-  shell: |
-    cd /home/ubuntu/backend
-    pm2 stop backend
-    pm2 delete backend
-- name: Start server
-  become: true
-  shell: |
-    cd /home/ubuntu/backend
-    echo $TYPEORM_DATABASE
-    WORK_ID=$(curl https://kvdb.io/${KVDB_BUCKET}/WORK_ID)
-    curl https://kvdb.io/${KVDB_BUCKET}/DEPLOY_ID  -d "deplo ${WORK_ID}" 
-    curl https://kvdb.io/${KVDB_BUCKET}/DB_HOST  -d "${TYPEORM_HOST}" 
-    pm2 start npm --name backend -- start
-    pm2 ls
+- name: "delete anything that might already be running"
+    become: true
+    command: pm2 delete all
+    ignore_errors: true
 
+- name: "start server"
+    become: true
+    command: pm2 start -f ./main.js
+    args:
+      chdir: /home/ubuntu/backend/dist
+    environment:
+     ENVIRONMENT: production
+     TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
+     TYPEORM_MIGRATIONS_DIR: "./migrations"
+     TYPEORM_MIGRATIONS: "./migrations/*.js"
+     TYPEORM_ENTITIES: "./modules/domain/**/*.entity.js"
+     TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
+     TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
+     TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
+     TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+     TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"

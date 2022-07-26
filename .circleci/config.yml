@@ -1,6 +1,6 @@
 version: 2.1
 
-# project_tag: dit-udapeople
+# project_tag: udapeople
 
 commands:
   install_aws:
@@ -33,23 +33,23 @@ commands:
           condition:
             and:
               - on_fail
-              - equal: [master, << pipeline.git.branch >>]
+              - equal: [dev, << pipeline.git.branch >>]
           steps:
             - run:
                 name: Destroy environments
                 when: on_fail
                 command: |
-                  aws cloudformation delete-stack --stack-name dit-udapeople-BE-<< parameters.workflow_id >>
-                  aws cloudformation delete-stack --stack-name dit-udapeople-FE-<< parameters.workflow_id >>
+                  aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflow_id >>
+                  aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflow_id >>
                   
                   echo "Waiting for stacks to be deleted..."
-                  bucketstatus=$(aws s3api head-bucket --bucket dit-udapeople-<< parameters.workflow_id >> 2>&1)
+                  bucketstatus=$(aws s3api head-bucket --bucket udapeople-<< parameters.workflow_id >> 2>&1)
                   if echo "${bucketstatus}" | grep 'Not Found';
                   then
                     echo "bucket doesn't exist";
                   else
-                    aws s3 rm s3://dit-udapeople-<< parameters.workflow_id >> --recursive
-                    aws s3 rb s3://dit-udapeople-<< parameters.workflow_id >> --force
+                    aws s3 rm s3://udapeople-<< parameters.workflow_id >> --recursive
+                    aws s3 rb s3://udapeople-<< parameters.workflow_id >> --force
                   fi
 
   revert-migrations:
@@ -181,21 +181,21 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=dit-udapeople \
-              --stack-name "dit-udapeople-BE-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=dit-udapeople \
-              --stack-name "dit-udapeople-FE-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            BACKEND_IP=$(aws ec2 describe-instances \
+            BACKEND_IP=$(aws ec2 describackend-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text)
@@ -238,7 +238,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: node:14
+      - image: node:13.8.0
     steps:
       - checkout
       - install_aws
@@ -275,15 +275,10 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: node:13.8.0
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            yum install -y tar gzip curl
-            curl -sL https://rpm.nodesource.com/setup_10.x | bash -
-            yum install -y nodejs
+      - install_aws
       - run:
           name: Get backend url and Deploy frontend objects
           command: |
@@ -291,11 +286,21 @@ jobs:
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}" >> frontend/.env
             cat frontend/.env
-            ls
-            cd ./frontend/
+      - run:
+          name: Rebuilding frontend with backend API Url
+          command: |
+            cd ./frontend
             npm i
             npm run build
-            aws s3 cp dist "s3://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+      - run:
+          name: Deploying frontend objects to S3
+          command: |
+            cd ./frontend
+            aws s3 cp ./dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/dist
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
                     
@@ -313,6 +318,7 @@ jobs:
           command: |
             apk add --no-cache curl
             apk add --no-cache openssh-client
+            apk add --no-cache nodejs npm
             apk add --no-cache --upgrade bash
             apk add --update ansible
             pip install awscli
@@ -321,10 +327,11 @@ jobs:
           command: |
             pwd
             ls
+            npm i
+            npm run build
+            cd ..
             tar czf backend.tar.gz backend/
             export ANSIBLE_HOST_KEY_CHECKING=false
-            BACKEND_IP=$(curl https://kvdb.io/${KVDB_BUCKET}/BACKEND_IP)
-            echo ${BACKEND_IP} >> ./.circleci/ansible/inventory.txt
             cat ./.circleci/ansible/inventory.txt
             ansible-playbook -i ./.circleci/ansible/inventory.txt ./.circleci/ansible/deploy-backend.yml 
       - destroy-environment:
@@ -351,25 +358,25 @@ jobs:
             echo "${API_URL}"
             
       - run:
-          name: Frontend smoke test.
-          command: |
-            URL="https://dit-udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3.amazonaws.com/index.html"
-            if curl -s ${URL}| grep  -q "Welcome";
-            then
-              echo "Frontend smoke test passed"
-            else
-              echo "Frontend smoke test failed"
-            fi
-      - run:
           name: Backend smoke test.
           command: |
             sleep 10
             echo "${API_URL}"
-            if curl -s ${API_URL}/api/status | grep  -q "ok";
+            if curl "${API_URL}/api/status" | grep "ok"
             then
-              echo "Backend smoke test passed"
+              return 0
             else
-              echo "Backend smoke test failed"
+              return 1
+            fi
+      - run:
+          name: Frontend smoke test.
+          command: |
+            URL="https://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3.amazonaws.com/index.html"
+            if curl -s ${URL}| grep  -q "Welcome";
+            then
+              return 0
+            else
+              return 1
             fi
 
       - destroy-environment:
@@ -395,8 +402,8 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file ./.circleci/files/cloudfront.yml \
-              --tags project=dit-udapeople \
-              --stack-name "dit-udapeople-cloudfront-production" \
+              --tags project=udapeople \
+              --stack-name "udapeople-cloudfront-production" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -425,9 +432,9 @@ jobs:
 
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              aws s3 rm "s3://dit-udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "dit-udapeople-BE-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "dit-udapeople-FE-${OldWorkflowID}"
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
             fi
             
 
